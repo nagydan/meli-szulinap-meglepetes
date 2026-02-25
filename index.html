@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meglepetés! Meli szülinapi összejövetel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0f0a1e;
+    --navy-soft: #1a1335;
+    --gold: #e8c547;
+    --coral: #ff6b4a;
+    --cream: #fef9f0;
+    --purple: #7c5fd9;
+    --text-light: rgba(255,255,255,0.95);
+  }
+
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse 120% 80% at 50% 0%, var(--navy-soft) 0%, var(--navy) 60%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Subtle ambient shapes */
+  .confetti-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .confetti-bg span {
+    position: absolute;
+    display: block;
+    animation: float 10s ease-in-out infinite;
+    opacity: 0.12;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(120deg); }
+  }
+
+  /* TAG WRAPPER - stacked papers */
+  .tag-scene {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    cursor: pointer;
+    padding-top: 16px;
+  }
+
+  /* String */
+  .string-wrap {
+    position: relative;
+    width: 3px;
+    height: 48px;
+    background: linear-gradient(to bottom, #e8d5b0, #c8a96e);
+    border-radius: 2px;
+    z-index: 11;
+    transform-origin: top center;
+    animation: sway 4s ease-in-out infinite;
+    box-shadow: 1px 0 4px rgba(0,0,0,0.3);
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  /* Eyelet */
+  .eyelet {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid #c8a96e;
+    background: var(--navy);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Cards container - stacked, matches image ratio (1024×896) */
+  .tag-stack {
+    position: relative;
+    width: min(95vw, 900px);
+    aspect-ratio: 1024 / 896;
+    max-height: calc(100vh - 80px);
+  }
+
+  /* INFO PAPER - behind, cream, centralized, ~half page width, full height */
+  .tag-info-paper {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 50vw;
+    max-width: 520px;
+    min-height: calc(100vh - 72px);
+    background: #fef9f0;
+    border-radius: 20px;
+    padding: 56px 52px 52px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    z-index: 1;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .tag-scene:hover .tag-info-paper,
+  .tag-scene.revealed .tag-info-paper {
+    opacity: 1;
+  }
+
+  /* MAIN IMAGE CARD - front, fades away on hover/click */
+  .tag {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.06);
+    transform: rotate(-1.5deg);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease;
+    animation: tagSway 5s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes tagSway {
+    0%, 100% { transform: rotate(-1.5deg) translateY(0); }
+    50% { transform: rotate(1deg) translateY(-4px); }
+  }
+
+  .tag-scene:hover .tag,
+  .tag-scene.revealed .tag {
+    animation: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* IMAGE - full contain */
+  .tag-front {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0612;
+  }
+
+  .tag-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+  }
+
+  /* Hint overlay */
+  .tag-front::after {
+    content: 'Kattints a részletekért! ✨';
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    background: linear-gradient(to top, rgba(10,5,30,0.85) 0%, transparent 100%);
+    padding: 48px 20px 16px;
+    transition: opacity 0.4s ease;
+  }
+
+  .tag-scene:hover .tag-front::after,
+  .tag-scene.revealed .tag-front::after {
+    opacity: 0;
+  }
+
+  /* Top accent on main card */
+  .tag .top-accent {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--coral) 0%, var(--gold) 50%, var(--purple) 100%);
+    z-index: 5;
+  }
+
+  /* Info paper typography - larger, centralized, better readability */
+  .tag-info-paper .surprise-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.35em;
+    color: rgba(26,19,53,0.7);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .tag-info-paper .main-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+
+  .tag-info-paper .subtitle {
+    font-size: 16px;
+    color: rgba(26,19,53,0.6);
+    font-weight: 300;
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .tag-info-paper .divider {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(26,19,53,0.25), transparent);
+    margin: 0 0 28px;
+  }
+
+  .tag-info-paper .desc {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(26,19,53,0.85);
+    margin-bottom: 28px;
+    max-width: 420px;
+  }
+
+  .tag-info-paper .info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .tag-info-paper .info-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+  }
+
+  .tag-info-paper .info-icon {
+    font-size: 22px;
+    min-width: 32px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .tag-info-paper .info-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .tag-info-paper .info-label {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(26,19,53,0.55);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .tag-info-paper .info-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy);
+    line-height: 1.5;
+  }
+
+  .tag-info-paper .info-value small {
+    font-size: 14px;
+    opacity: 0.8;
+    font-weight: 400;
+    display: block;
+    margin-top: 2px;
+  }
+  .tag-info-paper .maps-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--coral);
+    text-decoration: underline;
+    font-weight: 500;
+  }
+  .tag-info-paper .maps-link:hover {
+    color: var(--purple);
+  }
+
+  .tag-info-paper .divider2 {
+    width: 60px;
+    height: 1px;
+    background: rgba(26,19,53,0.15);
+    margin: 28px 0;
+  }
+
+  .tag-info-paper .note {
+    font-size: 15px;
+    color: rgba(26,19,53,0.8);
+    line-height: 1.6;
+    font-style: italic;
+    border-left: 3px solid #d4a574;
+    padding-left: 16px;
+    text-align: left;
+    max-width: 400px;
+  }
+
+  .tag-info-paper .cta {
+    margin-top: 32px;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--coral);
+  }
+
+  @media (max-width: 620px) {
+    .tag-stack {
+      width: min(95vw, 500px);
+    }
+    .tag-info-paper {
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 100vw;
+      max-width: none;
+      min-height: calc(100vh - 48px);
+      padding: 48px 24px 40px;
+      border-radius: 16px;
+    }
+    .tag-info-paper .main-title {
+      font-size: 36px;
+    }
+    .tag-info-paper .subtitle {
+      font-size: 14px;
+    }
+    .tag-info-paper .desc {
+      font-size: 15px;
+    }
+    .tag-info-paper .info-value {
+      font-size: 16px;
+    }
+    .tag-info-paper .cta {
+      font-size: 22px;
+    }
+    .tag-info-paper .desc,
+    .tag-info-paper .info-block,
+    .tag-info-paper .note {
+      max-width: 100%;
+    }
+    .tag-scene {
+      padding-top: 8px;
+    }
+    .string-wrap {
+      height: 40px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background confetti -->
+<div class="confetti-bg" id="bgConfetti"></div>
+
+<div class="tag-scene" id="tagScene">
+  <div class="string-wrap">
+    <div class="eyelet"></div>
+  </div>
+  <div class="tag-stack">
+    <div class="tag-info-paper">
+      <div class="surprise-label">✨ Meglepetés ✨</div>
+      <div class="main-title">Meli<br>szülinapi<br>összejövetele</div>
+      <div class="subtitle">Speakeasy bar / lounge hangulat</div>
+      <div class="desc">Jó társaság, italok – és persze egy közös tortázás</div>
+      <div class="info-block">
+        <div class="info-row">
+          <span class="info-icon">📅</span>
+          <div class="info-content">
+            <span class="info-label">Időpont</span>
+            <span class="info-value">Március 1. (vasárnap)
+              <small>13:30</small>
+            </span>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">📍</span>
+          <div class="info-content">
+            <span class="info-label">Helyszín</span>
+            <span class="info-value">1122 Budapest
+              <small>Krisztina krt. 2–4., félemelet 2. ajtó</small>
+              <small>(11-es kapucsengő)</small>
+              <a href="https://www.google.com/maps/place/Budapest,+Krisztina+krt.+2-4,+1122+Hungary/@47.5039304,19.0195153,16.55z/data=!4m5!3m4!1s0x4741dea10455d575:0x191a1b459a106e57!8m2!3d47.5069879!4d19.0228436?entry=ttu" target="_blank" rel="noopener noreferrer" class="maps-link">Megnyitás térképen</a>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="divider2"></div>
+      <div class="note">Meli kb. 14:00 körül fut be – kérlek, érkezz előbb, hogy meglegyen az előszülinapi "meglepi"!<br>Privát helyszín, nyugodtan hozz bármit amire szükséged lehet.</div>
+      <div class="cta">Gyere el, koccintsunk egyet! 🥂</div>
+    </div>
+    <div class="tag">
+    <div class="top-accent"></div>
+
+    <!-- Front: the photo -->
+    <div class="tag-front">
+      <img src="assets/meli-pool.png" alt="Meli pool photo" />
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+// Generate background confetti
+const colors = ['#f5c842','#ff6b4a','#6c4fc7','#4ab8ff','#ff4f9a','#43e97b'];
+const bg = document.getElementById('bgConfetti');
+const shapes = ['circle','rect','triangle'];
+for(let i=0; i<40; i++) {
+  const span = document.createElement('span');
+  const shape = shapes[Math.floor(Math.random()*3)];
+  const color = colors[Math.floor(Math.random()*colors.length)];
+  const size = 6 + Math.random()*14;
+  span.style.cssText = `
+    left: ${Math.random()*100}%;
+    top: ${Math.random()*100}%;
+    animation-delay: ${Math.random()*8}s;
+    animation-duration: ${6+Math.random()*6}s;
+  `;
+  if(shape==='circle') {
+    span.style.width = size+'px';
+    span.style.height = size+'px';
+    span.style.borderRadius = '50%';
+    span.style.background = color;
+  } else if(shape==='rect') {
+    span.style.width = (size*2)+'px';
+    span.style.height = (size*0.5)+'px';
+    span.style.background = color;
+    span.style.transform = `rotate(${Math.random()*90}deg)`;
+  } else {
+    span.style.width = '0';
+    span.style.height = '0';
+    span.style.borderLeft = (size/2)+'px solid transparent';
+    span.style.borderRight = (size/2)+'px solid transparent';
+    span.style.borderBottom = size+'px solid '+color;
+    span.style.background = 'none';
+  }
+  bg.appendChild(span);
+}
+
+// Card confetti (optional - only if element exists)
+const cc = document.getElementById('cardConfetti');
+if (cc) {
+for(let i=0; i<20; i++) {
+  const span = document.createElement('span');
+  const color = colors[Math.floor(Math.random()*colors.length)];
+  const size = 4 + Math.random()*10;
+  span.className = 'dot';
+  span.style.cssText = `
+    left: ${Math.random()*100}%;
+    top: ${Math.random()*100}%;
+    width: ${size}px; height: ${size}px;
+    border-radius: 50%;
+    background: ${color};
+    animation-delay: ${Math.random()*5}s;
+    animation-duration: ${4+Math.random()*4}s;
+    opacity: 0.3;
+  `;
+  cc.appendChild(span);
+}
+}
+
+// Tap to reveal info paper (mobile)
+const tagScene = document.getElementById('tagScene');
+if (tagScene) {
+  tagScene.addEventListener('click', function() {
+    tagScene.classList.toggle('revealed');
+  });
+}
+</script>
+</body>
+</html>
